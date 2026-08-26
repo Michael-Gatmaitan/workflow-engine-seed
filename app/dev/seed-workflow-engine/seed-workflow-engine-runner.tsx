@@ -20,7 +20,6 @@ import { useCreateCustomFieldDefinition } from "@/hooks/workflowEngine/useCreate
 import { useCreateTypeFieldConfig } from "@/hooks/workflowEngine/useCreateTypeFieldConfig";
 import { useCreateWorkItem } from "@/hooks/workflowEngine/useCreateWorkItem";
 import { useCreateWorkItemComment } from "@/hooks/workflowEngine/useCreateWorkItemComment";
-import { useAttachTag } from "@/hooks/workflowEngine/useAttachTag";
 import { WorkflowEngineError } from "@/lib/api/workflowEngine/error";
 import { ESTIMATED_DURATION_FIELD_NAME } from "@/lib/api/workflowEngine/constants";
 import {
@@ -29,8 +28,6 @@ import {
   buildStatusPayloads,
   buildTaskStatusToStatusName,
   buildWorkItemPayloadFromTask,
-  SEED_LABEL_TASK_IDS,
-  SEED_LABELS,
   SEED_STATUSES,
   SEED_TASKS,
   SEED_TRANSITIONS,
@@ -49,8 +46,7 @@ type SeedStepId =
   | "create-custom-field-definition"
   | "create-type-field-config"
   | "create-work-items"
-  | "create-comments"
-  | "attach-labels";
+  | "create-comments";
 
 type SeedStepStatus = "idle" | "running" | "success" | "error" | "skipped";
 
@@ -90,7 +86,6 @@ const INITIAL_STEPS: SeedStepState[] = [
   },
   { id: "create-work-items", label: "Create Work Items", status: "idle" },
   { id: "create-comments", label: "Create Comments", status: "idle" },
-  { id: "attach-labels", label: "Attach Labels", status: "idle" },
 ];
 
 interface SeedResults {
@@ -103,7 +98,6 @@ interface SeedResults {
   typeFieldConfigId?: string;
   workItemIdByTaskId?: Record<string, string>;
   commentIdByTaskId?: Record<string, string>;
-  tagAttachmentCount?: number;
 }
 
 function badgeVariantForStatus(status: SeedStepStatus) {
@@ -136,7 +130,6 @@ export default function SeedWorkflowEngineRunner() {
   const createTypeFieldConfig = useCreateTypeFieldConfig();
   const createWorkItem = useCreateWorkItem();
   const createWorkItemComment = useCreateWorkItemComment();
-  const attachTag = useAttachTag();
 
   function updateStep(id: SeedStepId, patch: Partial<SeedStepState>) {
     setSteps((current) =>
@@ -374,31 +367,6 @@ export default function SeedWorkflowEngineRunner() {
         detail: `${commentsCreated}/${SEED_TASKS.length} comments created`,
       });
       setResults((current) => ({ ...current, commentIdByTaskId }));
-
-      // 11. Labels
-      updateStep("attach-labels", { status: "running" });
-      let tagAttachmentCount = 0;
-      for (const label of SEED_LABELS) {
-        for (const taskId of SEED_LABEL_TASK_IDS[label]) {
-          const resourceId = workItemIdByTaskId[taskId];
-          if (!resourceId) continue;
-          await attachTag.mutateAsync({
-            name: label,
-            resource_type: "WORK_ITEM",
-            resource_id: resourceId,
-          });
-          tagAttachmentCount += 1;
-          updateStep("attach-labels", {
-            status: "running",
-            detail: `${tagAttachmentCount} labels attached`,
-          });
-        }
-      }
-      updateStep("attach-labels", {
-        status: "success",
-        detail: `${tagAttachmentCount} labels attached`,
-      });
-      setResults((current) => ({ ...current, tagAttachmentCount }));
     } catch (error) {
       const failedStepId = steps.find((step) => step.status === "running")?.id;
       const message =
@@ -429,10 +397,9 @@ export default function SeedWorkflowEngineRunner() {
         <h1 className="text-lg font-semibold">Seed Workflow Engine</h1>
         <p className="text-sm text-muted-foreground">
           Creates a fresh sandbox Project, Workflow, Statuses, Work Item Types,
-          a custom field, sample Work Items, Comments, and Labels against the
-          running sc-workflow-engine backend. Every run creates an independent
-          project (unique key each time), so it&apos;s safe to click more than
-          once.
+          a custom field, sample Work Items, and Comments against the running
+          sc-workflow-engine backend. Every run creates an independent project
+          (unique key each time), so it&apos;s safe to click more than once.
         </p>
       </div>
 

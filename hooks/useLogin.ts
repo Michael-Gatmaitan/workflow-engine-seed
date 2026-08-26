@@ -18,7 +18,7 @@ export const useLogin = () => {
         email,
         password,
         redirect: false,
-        redirectTo: callbackUrl ?? "/tasks",
+        redirectTo: callbackUrl ?? "/dev/seed-workflow-engine",
       });
 
       if (result?.error === "CredentialsSignin") {

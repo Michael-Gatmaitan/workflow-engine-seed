@@ -12,9 +12,19 @@ import {
 import { KANBAN_COLUMN_COLORS } from "../constants";
 
 export type SeedTaskStatus =
-  "todo" | "inProgress" | "done" | "cancelled" | "closed";
+  | "todo"
+  | "inProgress"
+  | "done"
+  | "cancelled"
+  | "closed";
 export type SeedTaskType = "housekeeping" | "maintenance";
 export type SeedTaskPriority = "low" | "medium" | "high";
+
+// Backend assignee_id is a Go *uuid.UUID column with no FK check, so any
+// well-formed UUID works — these are just fixed placeholders for demo seed
+// data, not real user accounts.
+const SEED_ASSIGNEE_ID_1 = "05a0a65f-eeae-4f1f-99e1-805f9b4a1d8c";
+const SEED_ASSIGNEE_ID_2 = "4f3e1d78-4c94-4cc9-b7ec-240e5e64190c";
 
 export interface SeedTaskComment {
   name: string;
@@ -34,6 +44,7 @@ export interface SeedTask {
   stayDuration: string;
   comments: SeedTaskComment[];
   estimatedDuration?: EstimatedDuration;
+  assigneeId: string | undefined;
   dueDate?: Date;
 }
 
@@ -50,6 +61,7 @@ export const SEED_TASKS: SeedTask[] = [
     floor: "1",
     stayDuration: "short stay",
     comments: [{ name: "Manager", content: "Needs to be done before 3 PM" }],
+    assigneeId: SEED_ASSIGNEE_ID_1,
   },
   {
     id: "TASK-002",
@@ -64,6 +76,7 @@ export const SEED_TASKS: SeedTask[] = [
     stayDuration: "long stay",
     comments: [{ name: "Guest", content: "Too loud at night" }],
     estimatedDuration: { days: 0, hours: 1 },
+    assigneeId: SEED_ASSIGNEE_ID_2,
   },
   {
     id: "TASK-003",
@@ -76,6 +89,7 @@ export const SEED_TASKS: SeedTask[] = [
     floor: "3",
     stayDuration: "short stay",
     comments: [{ name: "System", content: "Standard restock" }],
+    assigneeId: SEED_ASSIGNEE_ID_1,
   },
   {
     id: "TASK-004",
@@ -89,6 +103,7 @@ export const SEED_TASKS: SeedTask[] = [
     stayDuration: "long stay",
     comments: [{ name: "Inspector", content: "Leaking constantly" }],
     estimatedDuration: { days: 2, hours: 11 },
+    assigneeId: SEED_ASSIGNEE_ID_2,
   },
   {
     id: "TASK-005",
@@ -101,6 +116,7 @@ export const SEED_TASKS: SeedTask[] = [
     floor: "5",
     stayDuration: "short stay",
     comments: [{ name: "Guest", content: "Extra pillows requested" }],
+    assigneeId: SEED_ASSIGNEE_ID_1,
   },
   {
     id: "TASK-006",
@@ -114,6 +130,7 @@ export const SEED_TASKS: SeedTask[] = [
     floor: "Floor 3",
     stayDuration: "short stay",
     comments: [{ name: "Guest", content: "Extra pillows requested" }],
+    assigneeId: SEED_ASSIGNEE_ID_1,
   },
   {
     id: "TASK-007",
@@ -127,6 +144,7 @@ export const SEED_TASKS: SeedTask[] = [
     floor: "Floor 3",
     comments: [{ name: "Guest", content: "Extra pillows requested" }],
     stayDuration: "short stay",
+    assigneeId: undefined,
   },
 ];
 
@@ -231,14 +249,6 @@ export const SEED_WORK_ITEM_TYPES: SeedWorkItemTypeDefinition[] = [
   { name: "Maintenance", taskType: "maintenance", iconName: "Wrench" },
 ];
 
-export const SEED_LABELS = ["Bug", "Overdue"] as const;
-export type SeedLabel = (typeof SEED_LABELS)[number];
-
-export const SEED_LABEL_TASK_IDS: Record<SeedLabel, string[]> = {
-  Bug: ["TASK-002", "TASK-004"],
-  Overdue: ["TASK-005", "TASK-006"],
-};
-
 export function buildProjectKey(): string {
   const suffix = Date.now().toString(36).slice(-4).toUpperCase();
   return `SEED${suffix}`;
@@ -268,17 +278,6 @@ export function buildCommentBodyFromTaskComment(
 }
 
 // Spread seeded tasks across a mix of overdue and upcoming due dates.
-const DUE_DATE_OFFSET_DAYS_MIN = -5;
-const DUE_DATE_OFFSET_DAYS_MAX = 14;
-
-function randomDueDate(): Date {
-  const range = DUE_DATE_OFFSET_DAYS_MAX - DUE_DATE_OFFSET_DAYS_MIN + 1;
-  const offsetDays =
-    DUE_DATE_OFFSET_DAYS_MIN + Math.floor(Math.random() * range);
-  const date = new Date();
-  date.setDate(date.getDate() + offsetDays);
-  return date;
-}
 
 export interface BuildWorkItemPayloadIds {
   typeIdByTaskType: Record<SeedTaskType, string>;
@@ -310,6 +309,7 @@ export function buildWorkItemPayloadFromTask(
     description: task_item.description ?? "",
     current_status_id: ids.statusIdByTaskStatus[task_item.status],
     priority: mapTaskPriorityToPriorityLevel(task_item.priority),
+    assignee_id: task_item.assigneeId,
     custom_field_values: customFieldValues,
   };
 }

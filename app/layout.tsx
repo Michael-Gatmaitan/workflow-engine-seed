@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
+import TopNav from "@/components/top-nav";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
 import { auth } from "@/auth";
@@ -35,6 +36,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full bg-background text-foreground">
         <Providers session={session}>
+          <TopNav />
           {children}
           <Toaster />
         </Providers>

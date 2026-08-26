@@ -166,11 +166,3 @@ export interface WorkItemComment {
   user_id: string;
   body: string;
 }
-
-export interface Tag {
-  id: string;
-  name: string;
-  normalized_name: string;
-  type: string | null;
-  color: string | null;
-}
