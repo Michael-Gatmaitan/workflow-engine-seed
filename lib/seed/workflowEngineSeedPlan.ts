@@ -23,8 +23,8 @@ export type SeedTaskPriority = "low" | "medium" | "high";
 // Backend assignee_id is a Go *uuid.UUID column with no FK check, so any
 // well-formed UUID works — these are just fixed placeholders for demo seed
 // data, not real user accounts.
-const SEED_ASSIGNEE_ID_1 = "05a0a65f-eeae-4f1f-99e1-805f9b4a1d8c";
-const SEED_ASSIGNEE_ID_2 = "4f3e1d78-4c94-4cc9-b7ec-240e5e64190c";
+const SEED_ASSIGNEE_ID_1 = "05a0a65f-eeae-4f1f-99e1-805f9b4a1d8c"; // Housekeeper
+const SEED_ASSIGNEE_ID_2 = "4f3e1d78-4c94-4cc9-b7ec-240e5e64190c"; // Maintenance
 
 export interface SeedTaskComment {
   name: string;
@@ -236,6 +236,26 @@ export const SEED_TRANSITIONS: SeedTransitionDefinition[] = [
     fromStatusName: TASK_STATUS_NAMES.done,
     toStatusName: TASK_STATUS_NAMES.todo,
   },
+  {
+    name: "From To Do to Cancelled",
+    fromStatusName: TASK_STATUS_NAMES.todo,
+    toStatusName: TASK_STATUS_NAMES.cancelled,
+  },
+  {
+    name: "From In Progress to Cancelled",
+    fromStatusName: TASK_STATUS_NAMES.inProgress,
+    toStatusName: TASK_STATUS_NAMES.cancelled,
+  },
+  {
+    name: "From Done to Cancelled",
+    fromStatusName: TASK_STATUS_NAMES.done,
+    toStatusName: TASK_STATUS_NAMES.cancelled,
+  },
+  {
+    name: "From Cancelled to To Do",
+    fromStatusName: TASK_STATUS_NAMES.cancelled,
+    toStatusName: TASK_STATUS_NAMES.todo,
+  },
 ];
 
 export interface SeedWorkItemTypeDefinition {
@@ -289,7 +309,6 @@ export function buildWorkItemPayloadFromTask(
   ids: BuildWorkItemPayloadIds,
 ): CreateWorkItemPayload {
   const customFieldValues: Record<string, unknown> = {
-    legacy_task_id: task_item.id,
     room: task_item.room,
     location: task_item.location,
     floor: task_item.floor ?? null,

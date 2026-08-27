@@ -7,4 +7,3 @@ export const TASK_STATUS_NAMES = {
 } as const;
 
 export const ESTIMATED_DURATION_FIELD_NAME = "estimated_duration";
-export const DUE_DATE_FIELD_NAME = "due_date";

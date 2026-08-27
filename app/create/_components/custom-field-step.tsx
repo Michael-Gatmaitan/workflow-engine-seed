@@ -110,9 +110,7 @@ function toNumber(value: string): number | undefined {
   return value.trim() ? Number(value) : undefined;
 }
 
-function buildConfiguration(
-  values: FieldFormValues,
-): Record<string, unknown> {
+function buildConfiguration(values: FieldFormValues): Record<string, unknown> {
   const { key, isRequired, fieldType } = values;
 
   switch (fieldType) {
@@ -136,7 +134,10 @@ function buildConfiguration(
           max: toNumber(values.max),
           precision: toNumber(values.precision),
         },
-        ui_schema: { component: "number_input", placeholder: values.placeholder },
+        ui_schema: {
+          component: "number_input",
+          placeholder: values.placeholder,
+        },
         default_value: 0,
       };
     case "DROPDOWN": {
@@ -151,7 +152,10 @@ function buildConfiguration(
         }));
       return {
         key,
-        validation: { is_required: isRequired, allow_multiple: values.allowMultiple },
+        validation: {
+          is_required: isRequired,
+          allow_multiple: values.allowMultiple,
+        },
         ui_schema: { component: "dropdown" },
         options,
         default_value: values.allowMultiple ? [] : null,
@@ -167,14 +171,25 @@ function buildConfiguration(
     case "DATE":
       return {
         key,
-        validation: { is_required: isRequired, disallow_past: values.disallowPast },
+        validation: {
+          is_required: isRequired,
+          disallow_past: values.disallowPast,
+        },
         ui_schema: { component: "date_picker", display_format: "YYYY-MM-DD" },
         default_value: null,
       };
     case "BOOLEAN":
-      return { key, validation: { is_required: isRequired }, default_value: false };
+      return {
+        key,
+        validation: { is_required: isRequired },
+        default_value: false,
+      };
     case "OBJECT":
-      return { key, validation: { is_required: isRequired }, default_value: {} };
+      return {
+        key,
+        validation: { is_required: isRequired },
+        default_value: {},
+      };
   }
 }
 
@@ -208,7 +223,10 @@ interface CustomFieldStepProps {
   customFieldDefinitions: CustomFieldDefinition[];
   typeFieldConfigs: TypeFieldConfig[];
   onDefinitionCreated: (definition: CustomFieldDefinition) => void;
-  onAttached: (config: TypeFieldConfig, definition: CustomFieldDefinition) => void;
+  onAttached: (
+    config: TypeFieldConfig,
+    definition: CustomFieldDefinition,
+  ) => void;
   onContinue: () => void;
 }
 
@@ -230,7 +248,10 @@ export function CustomFieldStep({
     workItemTypes.map((type) => [type.id, type.name]),
   );
   const definitionItems = Object.fromEntries(
-    customFieldDefinitions.map((def) => [def.id, `${def.name} (${def.field_type})`]),
+    customFieldDefinitions.map((def) => [
+      def.id,
+      `${def.name} (${def.field_type})`,
+    ]),
   );
 
   const form = useForm<FieldFormValues>({
@@ -239,6 +260,7 @@ export function CustomFieldStep({
     defaultValues: defaultValues(workItemTypes),
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const mode = form.watch("mode");
   const fieldType = form.watch("fieldType");
   const selectedWorkItemTypeId = form.watch("workItemTypeId");
@@ -313,8 +335,8 @@ export function CustomFieldStep({
       <CardHeader>
         <CardTitle>Custom Field</CardTitle>
         <CardDescription>
-          Create a custom field definition, or attach an existing one, to a
-          work item type.
+          Create a custom field definition, or attach an existing one, to a work
+          item type.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
@@ -552,18 +574,19 @@ export function CustomFieldStep({
             />
           )}
 
-          {mode === "new" && (fieldType === "TEXT" || fieldType === "NUMBER") && (
-            <Controller
-              name="placeholder"
-              control={form.control}
-              render={({ field }) => (
-                <div className="grid gap-1.5">
-                  <Label htmlFor={field.name}>Placeholder (optional)</Label>
-                  <Input {...field} id={field.name} />
-                </div>
-              )}
-            />
-          )}
+          {mode === "new" &&
+            (fieldType === "TEXT" || fieldType === "NUMBER") && (
+              <Controller
+                name="placeholder"
+                control={form.control}
+                render={({ field }) => (
+                  <div className="grid gap-1.5">
+                    <Label htmlFor={field.name}>Placeholder (optional)</Label>
+                    <Input {...field} id={field.name} />
+                  </div>
+                )}
+              />
+            )}
 
           {mode === "new" && fieldType === "TEXT" && (
             <div className="grid grid-cols-2 gap-3">
