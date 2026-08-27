@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Card,
   CardContent,
@@ -119,6 +119,7 @@ export default function SeedWorkflowEngineRunner() {
   const [steps, setSteps] = useState<SeedStepState[]>(INITIAL_STEPS);
   const [results, setResults] = useState<SeedResults>({});
   const [isRunning, setIsRunning] = useState(false);
+  const runningStepIdRef = useRef<SeedStepId | null>(null);
 
   const createProject = useCreateProject();
   const createStatus = useCreateStatus();
@@ -132,6 +133,9 @@ export default function SeedWorkflowEngineRunner() {
   const createWorkItemComment = useCreateWorkItemComment();
 
   function updateStep(id: SeedStepId, patch: Partial<SeedStepState>) {
+    if (patch.status === "running") {
+      runningStepIdRef.current = id;
+    }
     setSteps((current) =>
       current.map((step) => (step.id === id ? { ...step, ...patch } : step)),
     );
@@ -151,6 +155,7 @@ export default function SeedWorkflowEngineRunner() {
     setIsRunning(true);
     setSteps(INITIAL_STEPS);
     setResults({});
+    runningStepIdRef.current = null;
 
     const stepOrder = INITIAL_STEPS.map((step) => step.id);
     const indexOf = (id: SeedStepId) => stepOrder.indexOf(id);
@@ -368,7 +373,8 @@ export default function SeedWorkflowEngineRunner() {
       });
       setResults((current) => ({ ...current, commentIdByTaskId }));
     } catch (error) {
-      const failedStepId = steps.find((step) => step.status === "running")?.id;
+      const failedStepId = runningStepIdRef.current;
+      console.error(`Seed step failed: ${failedStepId ?? "unknown"}`, error);
       const message =
         error instanceof WorkflowEngineError
           ? error.message
