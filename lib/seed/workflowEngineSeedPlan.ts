@@ -12,19 +12,15 @@ import {
 import { KANBAN_COLUMN_COLORS } from "../constants";
 
 export type SeedTaskStatus =
-  | "todo"
-  | "inProgress"
-  | "done"
-  | "cancelled"
-  | "closed";
+  "todo" | "inProgress" | "done" | "cancelled" | "closed";
 export type SeedTaskType = "housekeeping" | "maintenance";
-export type SeedTaskPriority = "low" | "medium" | "high";
+export type SeedTaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
 // Backend assignee_id is a Go *uuid.UUID column with no FK check, so any
 // well-formed UUID works — these are just fixed placeholders for demo seed
 // data, not real user accounts.
-const SEED_ASSIGNEE_ID_1 = "05a0a65f-eeae-4f1f-99e1-805f9b4a1d8c"; // Housekeeper
-const SEED_ASSIGNEE_ID_2 = "4f3e1d78-4c94-4cc9-b7ec-240e5e64190c"; // Maintenance
+const SEED_ASSIGNEE_ID_1 = "2230dc9e-a9c1-490e-98e3-0ac061207618"; // Housekeeper
+const SEED_ASSIGNEE_ID_2 = "efc3680c-2a92-4f70-ae48-684e5129f43c"; // Maintenance
 
 export interface SeedTaskComment {
   name: string;
@@ -45,7 +41,6 @@ export interface SeedTask {
   comments: SeedTaskComment[];
   estimatedDuration?: EstimatedDuration;
   assigneeId: string | undefined;
-  dueDate?: Date;
 }
 
 export const SEED_TASKS: SeedTask[] = [
@@ -55,11 +50,11 @@ export const SEED_TASKS: SeedTask[] = [
     description: "Deep clean of the master suite including bathroom.",
     status: "inProgress",
     taskType: "housekeeping",
-    priority: "high",
-    room: "101",
-    location: "north",
-    floor: "1",
-    stayDuration: "short stay",
+    priority: "LOW",
+    room: "Room 4",
+    location: "North Wing",
+    floor: "Floor 1",
+    stayDuration: "Short Stay",
     comments: [{ name: "Manager", content: "Needs to be done before 3 PM" }],
     assigneeId: SEED_ASSIGNEE_ID_1,
   },
@@ -69,11 +64,11 @@ export const SEED_TASKS: SeedTask[] = [
     description: "AC unit making rattling noise.",
     status: "todo",
     taskType: "maintenance",
-    priority: "medium",
-    room: "205",
-    location: "south",
-    floor: "2",
-    stayDuration: "long stay",
+    priority: "LOW",
+    room: "Room 4",
+    location: "North Wing",
+    floor: "Floor 6",
+    stayDuration: "Short Stay",
     comments: [{ name: "Guest", content: "Too loud at night" }],
     estimatedDuration: { days: 0, hours: 1 },
     assigneeId: SEED_ASSIGNEE_ID_2,
@@ -83,11 +78,11 @@ export const SEED_TASKS: SeedTask[] = [
     title: "Restock Mini Bar",
     status: "done",
     taskType: "housekeeping",
-    priority: "low",
-    room: "310",
-    location: "east",
-    floor: "3",
-    stayDuration: "short stay",
+    priority: "MEDIUM",
+    room: "Room 1",
+    location: "West Wing",
+    floor: "Floor 1",
+    stayDuration: "Long Stay",
     comments: [{ name: "System", content: "Standard restock" }],
     assigneeId: SEED_ASSIGNEE_ID_1,
   },
@@ -96,11 +91,11 @@ export const SEED_TASKS: SeedTask[] = [
     title: "Replace Showerhead",
     status: "closed",
     taskType: "maintenance",
-    priority: "high",
-    room: "402",
-    location: "west",
-    floor: "4",
-    stayDuration: "long stay",
+    priority: "LOW",
+    room: "Room 1",
+    location: "West Wing",
+    floor: "Floor 2",
+    stayDuration: "Long Stay",
     comments: [{ name: "Inspector", content: "Leaking constantly" }],
     estimatedDuration: { days: 2, hours: 11 },
     assigneeId: SEED_ASSIGNEE_ID_2,
@@ -110,11 +105,11 @@ export const SEED_TASKS: SeedTask[] = [
     title: "Turn down service",
     status: "cancelled",
     taskType: "housekeeping",
-    priority: "medium",
-    room: "501",
-    location: "north",
-    floor: "5",
-    stayDuration: "short stay",
+    priority: "HIGH",
+    room: "Room 5",
+    location: "South Wing",
+    floor: "Floor 3",
+    stayDuration: "Short Stay",
     comments: [{ name: "Guest", content: "Extra pillows requested" }],
     assigneeId: SEED_ASSIGNEE_ID_1,
   },
@@ -124,11 +119,11 @@ export const SEED_TASKS: SeedTask[] = [
     description: "Stain near entrance",
     status: "cancelled",
     taskType: "housekeeping",
-    priority: "medium",
-    room: "Room 239",
-    location: "east",
-    floor: "Floor 3",
-    stayDuration: "short stay",
+    priority: "LOW",
+    room: "Room 1",
+    location: "West Wing",
+    floor: "Floor 1",
+    stayDuration: "Long Stay",
     comments: [{ name: "Guest", content: "Extra pillows requested" }],
     assigneeId: SEED_ASSIGNEE_ID_1,
   },
@@ -138,12 +133,12 @@ export const SEED_TASKS: SeedTask[] = [
     description: "This task is not assign to anyone",
     status: "todo",
     taskType: "housekeeping",
-    priority: "low",
-    room: "Room 239",
-    location: "south",
+    priority: "LOW",
+    room: "Room 2",
+    location: "West Wing",
     floor: "Floor 3",
     comments: [{ name: "Guest", content: "Extra pillows requested" }],
-    stayDuration: "short stay",
+    stayDuration: "Short Stay",
     assigneeId: undefined,
   },
 ];
@@ -278,11 +273,11 @@ export function mapTaskPriorityToPriorityLevel(
   priority: SeedTaskPriority,
 ): PriorityLevel {
   switch (priority) {
-    case "low":
+    case "LOW":
       return "LOW";
-    case "medium":
+    case "MEDIUM":
       return "MEDIUM";
-    case "high":
+    case "HIGH":
       return "HIGH";
     default: {
       const exhaustiveCheck: never = priority;
@@ -297,7 +292,15 @@ export function buildCommentBodyFromTaskComment(
   return `[${comment.name}] ${comment.content}`;
 }
 
-// Spread seeded tasks across a mix of overdue and upcoming due dates.
+// Spread seeded tasks across a mix of overdue and upcoming due dates,
+// randomized relative to whenever the seed is actually run.
+const DUE_DATE_RANGE_DAYS = 5;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function buildRandomDueDateTimestamp(): number {
+  const offsetMs = (Math.random() * 2 - 1) * DUE_DATE_RANGE_DAYS * MS_PER_DAY;
+  return Math.round(Date.now() + offsetMs);
+}
 
 export interface BuildWorkItemPayloadIds {
   typeIdByTaskType: Record<SeedTaskType, string>;
@@ -312,7 +315,7 @@ export function buildWorkItemPayloadFromTask(
     room: task_item.room,
     location: task_item.location,
     floor: task_item.floor ?? null,
-    stay_duration: task_item.stayDuration,
+    stay_duration: task_item.stayDuration ?? null,
   };
 
   if (task_item.estimatedDuration) {
@@ -329,6 +332,7 @@ export function buildWorkItemPayloadFromTask(
     current_status_id: ids.statusIdByTaskStatus[task_item.status],
     priority: mapTaskPriorityToPriorityLevel(task_item.priority),
     assignee_id: task_item.assigneeId,
+    due_date: buildRandomDueDateTimestamp(),
     custom_field_values: customFieldValues,
   };
 }

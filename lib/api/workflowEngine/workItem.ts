@@ -17,6 +17,7 @@ export interface CreateWorkItemPayload {
   current_status_id: string;
   priority?: PriorityLevel;
   assignee_id?: string;
+  due_date?: number | null;
   custom_field_values?: Record<string, unknown>;
 }
 

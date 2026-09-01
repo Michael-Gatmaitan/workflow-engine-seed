@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { getJwtExpiryMillis } from "@/lib/jwt";
+import ThemeToggle from "@/components/theme-toggle";
 
 export default function TopNav() {
   const { data: session } = useSession();
@@ -21,16 +22,19 @@ export default function TopNav() {
   return (
     <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-background px-6">
       <span className="text-sm font-semibold">Workflow Engine Seed</span>
-      {session && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => void signOut({ callbackUrl: "/login" })}
-        >
-          <LogOut />
-          Logout
-        </Button>
-      )}
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
+        {session && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void signOut({ callbackUrl: "/login" })}
+          >
+            <LogOut />
+            Logout
+          </Button>
+        )}
+      </div>
     </header>
   );
 }

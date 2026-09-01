@@ -33,6 +33,7 @@ export default async function RootLayout({
     <html
       lang="en"
       className={cn("h-full", "antialiased", "font-sans", inter.variable)}
+      suppressHydrationWarning
     >
       <body className="min-h-full bg-background text-foreground">
         <Providers session={session}>
