@@ -8,8 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsiblePanel,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ChevronDownIcon } from "lucide-react";
 import { useCreateProject } from "@/hooks/workflowEngine/useCreateProject";
 import { useCreateStatus } from "@/hooks/workflowEngine/useCreateStatus";
 import { useCreateWorkflow } from "@/hooks/workflowEngine/useCreateWorkflow";
@@ -41,6 +47,8 @@ import {
   listProjectsAction,
 } from "@/app/actions/workflowEngine/project";
 import { toast } from "sonner";
+import type { WorkflowCanvasResponse } from "@/lib/api/workflowEngine/types";
+import { WorkflowCanvasDiagram } from "./workflow-canvas-diagram";
 
 type SeedStepId =
   | "create-project"
@@ -99,6 +107,7 @@ interface SeedResults {
   projectKey?: string;
   statusIdByName?: Record<string, string>;
   workflowId?: string;
+  canvas?: WorkflowCanvasResponse;
   typeIdByName?: Record<string, string>;
   customFieldDefinitionIdByName?: Record<string, string>;
   typeFieldConfigId?: string;
@@ -283,6 +292,7 @@ export default function SeedWorkflowEngineRunner() {
         status: "success",
         detail: `${canvas.nodes.length} nodes / ${initialCount} initial / ${canvas.transitions.length} transitions`,
       });
+      setResults((current) => ({ ...current, canvas }));
 
       // 6. Work item types
       updateStep("create-work-item-types", { status: "running" });
@@ -655,17 +665,50 @@ export default function SeedWorkflowEngineRunner() {
       )}
 
       {Object.keys(results).length > 0 && (
+        <Collapsible>
+          <Card>
+            <CollapsibleTrigger className="group block w-full cursor-pointer text-left">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <span>Results</span>
+                  <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground transition-transform group-data-panel-open:rotate-180" />
+                </CardTitle>
+                <CardDescription>
+                  Created entity IDs, for manual verification against the
+                  backend.
+                </CardDescription>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsiblePanel>
+              <CardContent>
+                <pre className="overflow-x-auto text-xs whitespace-pre-wrap">
+                  {JSON.stringify(results, null, 2)}
+                </pre>
+              </CardContent>
+            </CollapsiblePanel>
+          </Card>
+        </Collapsible>
+      )}
+
+      {results.canvas && results.projectId && results.workflowId && (
         <Card>
           <CardHeader>
-            <CardTitle>Results</CardTitle>
+            <CardTitle>Workflow Canvas</CardTitle>
             <CardDescription>
-              Created entity IDs, for manual verification against the backend.
+              Statuses and their valid transitions, as saved to the workflow
+              canvas.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <pre className="overflow-x-auto text-xs whitespace-pre-wrap">
-              {JSON.stringify(results, null, 2)}
-            </pre>
+            <WorkflowCanvasDiagram
+              nodes={results.canvas.nodes}
+              transitions={results.canvas.transitions}
+              projectId={results.projectId}
+              workflowId={results.workflowId}
+              onCanvasUpdate={(canvas) =>
+                setResults((current) => ({ ...current, canvas }))
+              }
+            />
           </CardContent>
         </Card>
       )}
