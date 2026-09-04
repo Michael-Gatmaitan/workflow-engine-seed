@@ -12,11 +12,7 @@ import {
 import { KANBAN_COLUMN_COLORS } from "../constants";
 
 export type SeedTaskStatus =
-  | "todo"
-  | "inProgress"
-  | "done"
-  | "cancelled"
-  | "closed";
+  "todo" | "inProgress" | "done" | "cancelled" | "closed";
 export type SeedTaskType = "housekeeping" | "maintenance";
 export type SeedTaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
@@ -256,17 +252,38 @@ export const SEED_TRANSITIONS: SeedTransitionDefinition[] = [
     fromStatusName: TASK_STATUS_NAMES.cancelled,
     toStatusName: TASK_STATUS_NAMES.todo,
   },
+  {
+    name: "From Done to Closed",
+    fromStatusName: TASK_STATUS_NAMES.done,
+    toStatusName: TASK_STATUS_NAMES.closed,
+  },
+  {
+    name: "From Cancelled to Closed",
+    fromStatusName: TASK_STATUS_NAMES.cancelled,
+    toStatusName: TASK_STATUS_NAMES.closed,
+  },
 ];
 
 export interface SeedWorkItemTypeDefinition {
   name: "Housekeeping" | "Maintenance";
   taskType: SeedTaskType;
   iconName: string;
+  color: string;
 }
 
 export const SEED_WORK_ITEM_TYPES: SeedWorkItemTypeDefinition[] = [
-  { name: "Housekeeping", taskType: "housekeeping", iconName: "Sparkles" },
-  { name: "Maintenance", taskType: "maintenance", iconName: "Wrench" },
+  {
+    name: "Housekeeping",
+    taskType: "housekeeping",
+    iconName: "Sparkles",
+    color: "blue",
+  },
+  {
+    name: "Maintenance",
+    taskType: "maintenance",
+    iconName: "Wrench",
+    color: "orange",
+  },
 ];
 
 export function buildProjectKey(): string {

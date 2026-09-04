@@ -15,6 +15,7 @@ export interface CreateWorkItemTypePayload {
   workflow_id?: string;
   tool?: string;
   is_subtask_type?: boolean;
+  color: string;
 }
 
 export async function createWorkItemTypeRequest(

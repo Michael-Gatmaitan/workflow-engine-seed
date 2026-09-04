@@ -119,6 +119,7 @@ export interface WorkItemType {
   icon_name: string | null;
   tool: string | null;
   is_subtask_type: boolean;
+  color: string;
 }
 
 export interface CustomFieldDefinition {

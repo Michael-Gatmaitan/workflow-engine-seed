@@ -299,6 +299,7 @@ export default function SeedWorkflowEngineRunner() {
             name: typeDefinition.name,
             workflow_id: workflow.id,
             icon_name: typeDefinition.iconName,
+            color: typeDefinition.color,
           },
         });
         typeIdByName[workItemType.name] = workItemType.id;
