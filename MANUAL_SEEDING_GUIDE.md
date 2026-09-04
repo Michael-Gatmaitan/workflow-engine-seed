@@ -517,7 +517,7 @@ Create these 6 (mirrors the seeder's demo fields):
   "field_type": "DROPDOWN",
   "configuration": {
     "key": "room",
-    "validation": { "is_required": false },
+    "validation": { "is_required": true },
     "ui_schema": { "component": "Dropdown", "placeholder": "-- Room --" },
     "default_value": ""
   }

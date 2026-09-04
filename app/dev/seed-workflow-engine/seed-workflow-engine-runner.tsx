@@ -328,7 +328,7 @@ export default function SeedWorkflowEngineRunner() {
             configuration: {
               key: "room",
               validation: {
-                is_required: false,
+                is_required: true,
                 min_length: 0,
                 max_length: 100,
               },
