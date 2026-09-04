@@ -12,7 +12,11 @@ import {
 import { KANBAN_COLUMN_COLORS } from "../constants";
 
 export type SeedTaskStatus =
-  "todo" | "inProgress" | "done" | "cancelled" | "closed";
+  | "todo"
+  | "inProgress"
+  | "done"
+  | "cancelled"
+  | "closed";
 export type SeedTaskType = "housekeeping" | "maintenance";
 export type SeedTaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
@@ -196,6 +200,7 @@ export function buildStatusPayloads(): CreateStatusPayload[] {
     name: status.name,
     category: status.category,
     color: status.color,
+    code: status.name.toUpperCase().replaceAll(" ", "_"),
   }));
 }
 

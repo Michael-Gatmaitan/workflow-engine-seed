@@ -35,6 +35,12 @@ import {
   type SeedTaskStatus,
   type SeedTaskType,
 } from "@/lib/seed/workflowEngineSeedPlan";
+import { useProjects } from "@/hooks/workflowEngine/useProjects";
+import {
+  deleteProjectAction,
+  listProjectsAction,
+} from "@/app/actions/workflowEngine/project";
+import { toast } from "sonner";
 
 type SeedStepId =
   | "create-project"
@@ -94,7 +100,7 @@ interface SeedResults {
   statusIdByName?: Record<string, string>;
   workflowId?: string;
   typeIdByName?: Record<string, string>;
-  customFieldDefinitionId?: string;
+  customFieldDefinitionIdByName?: Record<string, string>;
   typeFieldConfigId?: string;
   workItemIdByTaskId?: Record<string, string>;
   commentIdByTaskId?: Record<string, string>;
@@ -152,6 +158,24 @@ export default function SeedWorkflowEngineRunner() {
   }
 
   async function runSeed() {
+    // Delete the existing projects that has a tool name of "MAINTENANCE" first before creating a new one.
+
+    const projects = await listProjectsAction({
+      filter: { tool: "MAINTENANCE" },
+    });
+
+    if (projects.success) {
+      projects.data.data.forEach(async (project) => {
+        await deleteProjectAction(project.id).then(() => {
+          toast.success(
+            `Deleted the duplicated project that has a tool name of "MAINTENANCE"`,
+          );
+        });
+      });
+    }
+
+    console.log("Projects: ", projects);
+
     setIsRunning(true);
     setSteps(INITIAL_STEPS);
     setResults({});
@@ -167,6 +191,7 @@ export default function SeedWorkflowEngineRunner() {
       const project = await createProject.mutateAsync({
         name: `Seed Sandbox ${projectKey}`,
         key: projectKey,
+        tool: "MAINTENANCE",
       });
       updateStep("create-project", {
         status: "success",
@@ -291,21 +316,185 @@ export default function SeedWorkflowEngineRunner() {
 
       // 7. Custom field definition
       updateStep("create-custom-field-definition", { status: "running" });
-      const customFieldDefinition =
+
+      // Room
+      const roomFieldDefinition = await createCustomFieldDefinition.mutateAsync(
+        {
+          projectId: project.id,
+          payload: {
+            name: "room",
+            field_type: "DROPDOWN",
+            configuration: {
+              key: "room",
+              validation: {
+                is_required: false,
+                min_length: 0,
+                max_length: 100,
+              },
+              ui_schema: {
+                component: "Dropdown",
+                placeholder: "-- Room --",
+                help_text: "Used for identifying the floor of a task.",
+                has_label: false,
+                visible: true,
+                input_type: "dropdown",
+              },
+              default_value: "",
+            },
+          },
+        },
+      );
+
+      // Floor
+      const floorFieldDefinition =
         await createCustomFieldDefinition.mutateAsync({
           projectId: project.id,
           payload: {
-            name: ESTIMATED_DURATION_FIELD_NAME,
-            field_type: "OBJECT",
+            name: "floor",
+            field_type: "DROPDOWN",
+            configuration: {
+              key: "floor",
+              validation: {
+                is_required: false,
+                min_length: 0,
+                max_length: 100,
+              },
+              ui_schema: {
+                component: "Dropdown",
+                placeholder: "-- Room --",
+                help_text: "Used for identifying the floor of a task.",
+                has_label: false,
+                visible: true,
+                input_type: "dropdown",
+              },
+              default_value: "",
+            },
           },
         });
+
+      // Stay Duration
+      const stayDurationFieldDefinition =
+        await createCustomFieldDefinition.mutateAsync({
+          projectId: project.id,
+          payload: {
+            name: "stay_duration",
+            field_type: "DROPDOWN",
+            configuration: {
+              key: "stay_duration",
+              validation: {
+                is_required: false,
+                min_length: 0,
+                max_length: 100,
+              },
+              ui_schema: {
+                component: "Dropdown",
+                placeholder: "-- Stay duration (Optional) --",
+                help_text: "Used for identifying the stay duration of a task.",
+                has_label: false,
+                visible: true,
+                input_type: "dropdown",
+              },
+              default_value: "",
+            },
+          },
+        });
+
+      // Location (Nort wing)
+      const locationFieldDefinition =
+        await createCustomFieldDefinition.mutateAsync({
+          projectId: project.id,
+          payload: {
+            name: "location",
+            field_type: "DROPDOWN",
+            configuration: {
+              key: "location",
+              validation: {
+                is_required: true,
+                min_length: 0,
+                max_length: 100,
+              },
+              ui_schema: {
+                component: "Dropdown",
+                placeholder: "-- Location --",
+                help_text: "Used for identifying the location of a task.",
+                has_label: false,
+                visible: true,
+                input_type: "dropdown",
+              },
+              default_value: "North Wing",
+            },
+          },
+        });
+
+      // Estimated duration (day)
+      const estimatedDaysFieldDefinition =
+        await createCustomFieldDefinition.mutateAsync({
+          projectId: project.id,
+          payload: {
+            name: "estimated_days",
+            field_type: "NUMBER",
+            configuration: {
+              key: "estimated_days",
+              validation: {
+                is_required: false,
+                min: 0,
+                max: 100,
+              },
+              ui_schema: {
+                component: "Stepper",
+                placeholder: "",
+                help_text: "Used for creating estimated days of a task.",
+                has_label: false,
+                visible: true,
+                input_type: "number",
+              },
+              default_value: 0,
+            },
+          },
+        });
+
+      // Estimated duration (hour)
+      const estimatedHoursFieldDefinition =
+        await createCustomFieldDefinition.mutateAsync({
+          projectId: project.id,
+          payload: {
+            name: "estimated_hours",
+            field_type: "NUMBER",
+            configuration: {
+              key: "estimated_hours",
+              validation: {
+                is_required: false,
+                min: 0,
+                max: 23,
+              },
+              ui_schema: {
+                component: "Stepper",
+                placeholder: "",
+                help_text: "Used for creating estimated hours of a task.",
+                has_label: false,
+                visible: true,
+                input_type: "number",
+              },
+              default_value: 0,
+            },
+          },
+        });
+
+      const customFieldDefinitionIdByName: Record<string, string> = {
+        [roomFieldDefinition.name]: roomFieldDefinition.id,
+        [floorFieldDefinition.name]: floorFieldDefinition.id,
+        [stayDurationFieldDefinition.name]: stayDurationFieldDefinition.id,
+        [locationFieldDefinition.name]: locationFieldDefinition.id,
+        [estimatedDaysFieldDefinition.name]: estimatedDaysFieldDefinition.id,
+        [estimatedHoursFieldDefinition.name]: estimatedHoursFieldDefinition.id,
+      };
       updateStep("create-custom-field-definition", {
         status: "success",
-        detail: customFieldDefinition.name,
+        detail: estimatedDaysFieldDefinition.name,
       });
       setResults((current) => ({
         ...current,
-        customFieldDefinitionId: customFieldDefinition.id,
+        customFieldDefinitionIdByName,
       }));
 
       // 8. Type field config
@@ -313,7 +502,9 @@ export default function SeedWorkflowEngineRunner() {
       const typeFieldConfig = await createTypeFieldConfig.mutateAsync({
         projectId: project.id,
         typeId: typeIdByName["Maintenance"],
-        payload: { custom_field_definition_id: customFieldDefinition.id },
+        payload: {
+          custom_field_definition_id: estimatedDaysFieldDefinition.id,
+        },
       });
       updateStep("create-type-field-config", {
         status: "success",
@@ -434,6 +625,33 @@ export default function SeedWorkflowEngineRunner() {
           </Card>
         ))}
       </div>
+
+      {results.customFieldDefinitionIdByName && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Custom Field Definitions</CardTitle>
+            <CardDescription>
+              Name and ID of each custom field definition created for this
+              project.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="flex flex-col gap-1 text-xs">
+              {Object.entries(results.customFieldDefinitionIdByName).map(
+                ([name, id]) => (
+                  <li
+                    key={id}
+                    className="flex items-center justify-between gap-2 font-mono"
+                  >
+                    <span>{name}</span>
+                    <span className="text-muted-foreground">{id}</span>
+                  </li>
+                ),
+              )}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       {Object.keys(results).length > 0 && (
         <Card>
