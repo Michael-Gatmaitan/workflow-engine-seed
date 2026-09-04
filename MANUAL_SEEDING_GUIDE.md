@@ -179,7 +179,7 @@ Create these 5 (mirrors the seeder's default board):
 | 4   | Cancelled   | `DONE`        | red    | `CANCELLED`   |
 | 5   | Closed      | `DONE`        | green  | `CLOSED`      |
 
-Example body (status #1):
+Full request body for each of the 5 — run one request per status, in order:
 
 ```json
 {
@@ -187,6 +187,42 @@ Example body (status #1):
   "category": "TODO",
   "color": "orange",
   "code": "TO_DO"
+}
+```
+
+```json
+{
+  "name": "In Progress",
+  "category": "IN_PROGRESS",
+  "color": "blue",
+  "code": "IN_PROGRESS"
+}
+```
+
+```json
+{
+  "name": "Done",
+  "category": "DONE",
+  "color": "green",
+  "code": "DONE"
+}
+```
+
+```json
+{
+  "name": "Cancelled",
+  "category": "DONE",
+  "color": "red",
+  "code": "CANCELLED"
+}
+```
+
+```json
+{
+  "name": "Closed",
+  "category": "DONE",
+  "color": "green",
+  "code": "CLOSED"
 }
 ```
 
@@ -641,7 +677,9 @@ The seeder wires exactly one of these: `estimated_days` onto the **Maintenance**
 
 `reporter_id` is **always** overwritten server-side from the caller's JWT `uuid` claim — don't bother sending it. `item_number` is auto-assigned by a DB trigger (sequential per project).
 
-### Fully worked example
+> ⚠️ **`estimated_duration` is type-dependent.** Work items of the **Maintenance** type carry an extra key inside `custom_field_values`: `"estimated_duration": { "days": 0, "hours": 0 }` (nested object, not the flat `estimated_days`/`estimated_hours` field names from Step 6 — those field definitions exist only to drive the form UI's two Stepper inputs, but the value is written back as one combined object under the single key `estimated_duration`). When you don't have a real estimate yet, default it to `{ "days": 0, "hours": 0 }`. Work items of the **Housekeeping** type must **omit** `estimated_duration` from `custom_field_values` entirely — don't send it, even as zeros.
+
+### Fully worked example — Housekeeping type
 
 ```json
 {
@@ -689,6 +727,58 @@ The seeder wires exactly one of these: `estimated_days` onto the **Maintenance**
 }
 ```
 
+### Fully worked example — Maintenance type
+
+```json
+{
+  "type_id": "{{work_item_type_id_maintenance}}",
+  "title": "Fix AC Unit",
+  "description": "AC unit making rattling noise.",
+  "current_status_id": "{{status_id_todo}}",
+  "priority": "HIGH",
+  "assignee_id": "efc3680c-2a92-4f70-ae48-684e5129f43c",
+  "due_date": 1791100800000,
+  "custom_field_values": {
+    "room": "Room 4",
+    "location": "North Wing",
+    "floor": "Floor 6",
+    "stay_duration": "Short Stay",
+    "estimated_duration": { "days": 0, "hours": 0 }
+  }
+}
+```
+
+**Response `200 OK`:**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "c8d9e0f1-8888-4a2b-9c3d-000000000008",
+    "project_id": "b7f1e2a0-1111-4a2b-9c3d-000000000001",
+    "type_id": "{{work_item_type_id_maintenance}}",
+    "current_status_id": "{{status_id_todo}}",
+    "item_number": 2,
+    "title": "Fix AC Unit",
+    "description": "AC unit making rattling noise.",
+    "priority": "HIGH",
+    "reporter_id": "<from your JWT>",
+    "assignee_id": "efc3680c-2a92-4f70-ae48-684e5129f43c",
+    "due_date": 1791100800000,
+    "custom_field_values": {
+      "room": "Room 4",
+      "location": "North Wing",
+      "floor": "Floor 6",
+      "stay_duration": "Short Stay",
+      "estimated_duration": { "days": 0, "hours": 0 }
+    }
+  },
+  "message": "Work item recorded successfully"
+}
+```
+
+Note the only structural difference from the Housekeeping example: the added `estimated_duration` key. Everything else (`room`, `location`, `floor`, `stay_duration`) is shared across both types.
+
 ### The rest of the seeded set
 
 Two fixed placeholder assignee UUIDs are reused across items (not real accounts — nothing validates them):
@@ -696,17 +786,17 @@ Two fixed placeholder assignee UUIDs are reused across items (not real accounts 
 - Housekeeper: `2230dc9e-a9c1-490e-98e3-0ac061207618`
 - Maintenance: `efc3680c-2a92-4f70-ae48-684e5129f43c`
 
-| #   | title              | type         | status      | priority | assignee               | custom_field_values                                    |
-| --- | ------------------ | ------------ | ----------- | -------- | ---------------------- | ------------------------------------------------------ |
-| 1   | Clean Master Suite | Housekeeping | In Progress | LOW      | Housekeeper            | `{room, location, floor, stay_duration}` — shown above |
-| 2   | Fix AC Unit        | Maintenance  | To Do       | HIGH     | Maintenance            | `{ "estimated_days": 0, "estimated_hours": 1 }`        |
-| 3   | Restock Mini Bar   | Housekeeping | Done        | LOW      | Housekeeper            | room/location/floor as applicable                      |
-| 4   | Replace Showerhead | Maintenance  | Closed      | MEDIUM   | Maintenance            | `{ "estimated_days": 2, "estimated_hours": 11 }`       |
-| 5   | Turn down service  | Housekeeping | Cancelled   | LOW      | Housekeeper            | room/location/floor as applicable                      |
-| 6   | Carpet Cleaning    | Housekeeping | Cancelled   | LOW      | Housekeeper            | room/location/floor as applicable                      |
-| 7   | Unassign Task      | Housekeeping | To Do       | LOW      | _(omit `assignee_id`)_ | room/location/floor as applicable                      |
+| #   | title              | type         | status      | priority | assignee               | custom_field_values                                          |
+| --- | ------------------ | ------------ | ----------- | -------- | ---------------------- | -------------------------------------------------------------- |
+| 1   | Clean Master Suite | Housekeeping | In Progress | LOW      | Housekeeper            | `{room, location, floor, stay_duration}` — shown above       |
+| 2   | Fix AC Unit        | Maintenance  | To Do       | HIGH     | Maintenance            | room/location/floor/stay_duration + `"estimated_duration": { "days": 0, "hours": 1 }` — shown above uses `{0, 0}` as the default |
+| 3   | Restock Mini Bar   | Housekeeping | Done        | LOW      | Housekeeper            | room/location/floor as applicable — **no** `estimated_duration` |
+| 4   | Replace Showerhead | Maintenance  | Closed      | MEDIUM   | Maintenance            | room/location/floor/stay_duration + `"estimated_duration": { "days": 2, "hours": 11 }` |
+| 5   | Turn down service  | Housekeeping | Cancelled   | LOW      | Housekeeper            | room/location/floor as applicable — **no** `estimated_duration` |
+| 6   | Carpet Cleaning    | Housekeeping | Cancelled   | LOW      | Housekeeper            | room/location/floor as applicable — **no** `estimated_duration` |
+| 7   | Unassign Task      | Housekeeping | To Do       | LOW      | _(omit `assignee_id`)_ | room/location/floor as applicable — **no** `estimated_duration` |
 
-For rows where the exact `description`/`room`/`floor` text isn't critical, fill in any realistic placeholder — only `type_id`, a status that's a valid node for that type's workflow, and (for Maintenance items) the `estimated_days`/`estimated_hours` custom fields matter for reproducing the seeder's intent.
+For rows where the exact `description`/`room`/`floor` text isn't critical, fill in any realistic placeholder — only `type_id`, a status that's a valid node for that type's workflow, and (for Maintenance items) the `estimated_duration` custom field matter for reproducing the seeder's intent. Remember: `estimated_duration` is only ever sent for Maintenance items — never include it for Housekeeping items, not even as `{ "days": 0, "hours": 0 }`.
 
 ---
 
